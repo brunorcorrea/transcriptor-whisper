@@ -60,9 +60,6 @@ tema_cyberglass = gr.themes.Base(
     block_shadow="0 4px 30px rgba(0, 0, 0, 0.5)",
     button_primary_background_fill="linear-gradient(90deg, #06b6d4 0%, #3b82f6 100%)",
     button_primary_text_color="white",
-    input_background_fill="rgba(0, 0, 0, 0.3)",
-    input_border_color="rgba(6, 182, 212, 0.3)",
-    input_text_color="#38bdf8",
     slider_color="#06b6d4",
 )
 
@@ -93,6 +90,13 @@ css_personalizado = """
     border-color: #06b6d4 !important;
 }
 
+
+/* Cores dos inputs */
+.gradio-container textarea, .gradio-container input {
+    background: rgba(0, 0, 0, 0.3) !important;
+    border: 1px solid rgba(6, 182, 212, 0.3) !important;
+    color: #38bdf8 !important;
+}
 /* Tipografia de destaque para títulos */
 .gradio-container h1, .gradio-container h2 {
     text-shadow: 0 0 10px rgba(56, 189, 248, 0.6) !important;
@@ -107,7 +111,7 @@ css_personalizado = """
 """
 # ---------------------------------------------------------------------------
 
-with gr.Blocks(title="Transcritor Inteligente", theme=tema_cyberglass, css=css_personalizado) as interface:
+with gr.Blocks(title="Transcritor Inteligente") as interface:
     gr.Markdown("# 🎙️ SYS.TRANSCRIBE // WHISPER_AI")
     gr.Markdown("""
     **[ STATUS: ONLINE ]**  
@@ -151,4 +155,4 @@ with gr.Blocks(title="Transcritor Inteligente", theme=tema_cyberglass, css=css_p
     )
 
 if __name__ == "__main__":
-    interface.launch(server_name="0.0.0.0", server_port=7860)
+    interface.launch(server_name="0.0.0.0", server_port=7860, theme=tema_cyberglass, css=css_personalizado)
