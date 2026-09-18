@@ -8,13 +8,14 @@ warnings.filterwarnings("ignore", message="FP16 is not supported on CPU; using F
 
 modelos_carregados = {}
 
+# Informações refinadas dos modelos para um visual mais limpo
 INFO_MODELOS = {
-    "tiny": {"peso": "~75MB", "classificacao": "Muito Leve"},
-    "base": {"peso": "~140MB", "classificacao": "Leve"},
-    "small": {"peso": "~460MB", "classificacao": "Mediano"},
-    "medium": {"peso": "~1.5GB", "classificacao": "Pesado"},
-    "turbo": {"peso": "~1.6GB", "classificacao": "Pesado (Rápido)"},
-    "large": {"peso": "~2.9GB", "classificacao": "Muito Pesado"}
+    "tiny": {"peso": "75MB", "desc": "Velocidade Extrema"},
+    "base": {"peso": "140MB", "desc": "Padrão Rápido"},
+    "small": {"peso": "460MB", "desc": "Equilibrado"},
+    "medium": {"peso": "1.5GB", "desc": "Alta Precisão"},
+    "turbo": {"peso": "1.6GB", "desc": "Turbo (Preciso e Veloz)"},
+    "large": {"peso": "2.9GB", "desc": "Precisão Máxima"}
 }
 
 def obter_opcoes_modelos():
@@ -23,10 +24,10 @@ def obter_opcoes_modelos():
     
     for modelo, info in INFO_MODELOS.items():
         caminho_arquivo = os.path.join(cache_dir, f"{modelo}.pt")
-        # Removido os emojis, utilizando símbolos limpos (unicode)
-        status = "✓ PRONTO" if os.path.exists(caminho_arquivo) else "↓ REQUER DOWNLOAD"
+        # Ícone visual indicando se o arquivo está salvo na máquina local (Raio) ou se precisa baixar (Nuvem)
+        icone = "⚡" if os.path.exists(caminho_arquivo) else "☁️"
         
-        texto_exibicao = f"{modelo.upper()} • {info['classificacao']} ({info['peso']}) • {status}"
+        texto_exibicao = f"{icone} {modelo.upper()}  —  {info['desc']}  ({info['peso']})"
         opcoes.append((texto_exibicao, modelo))
         
     return opcoes
@@ -111,6 +112,30 @@ css_moderno = """
     margin-top: 0;
 }
 
+/* Melhoria visual Premium no Seletor de Modelos (Dropdown) */
+.model-dropdown .wrap {
+    background: linear-gradient(180deg, #18181B 0%, #09090B 100%) !important;
+    border: 1px solid #3F3F46 !important;
+    border-radius: 12px !important;
+    padding: 2px 4px !important;
+    box-shadow: inset 0 2px 4px rgba(255,255,255,0.02) !important;
+    transition: all 0.2s ease !important;
+}
+.model-dropdown .wrap:hover {
+    border-color: #71717A !important;
+}
+/* Estilo interno do texto no dropdown para ficar mais sofisticado */
+.model-dropdown span.single-select {
+    color: #FAFAFA !important;
+    font-family: 'Inter', sans-serif !important;
+    font-weight: 500 !important;
+    letter-spacing: 0.2px !important;
+}
+.model-dropdown label span.text-gray-500 {
+    color: #A1A1AA !important; 
+    font-weight: 500 !important;
+}
+
 /* Campos totalmente arredondados e suaves */
 .gradio-container textarea, .gradio-container input {
     border-radius: 12px !important;
@@ -125,7 +150,7 @@ css_moderno = """
 
 /* Botões Modernos (Pill shape e hover states) */
 .gradio-container button.primary {
-    border-radius: 9999px !important; /* Totalmente redondo */
+    border-radius: 9999px !important;
     font-weight: 600 !important;
     padding: 14px 28px !important;
     border: none !important;
@@ -154,7 +179,6 @@ css_moderno = """
 
 with gr.Blocks(title="AudioScribe") as interface:
     
-    # Cabeçalho usando HTML inline para incluir SVGs clean no lugar dos Emojis
     gr.HTML("""
     <div style="text-align: center; max-width: 600px; margin: 2rem auto;">
         <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin: 0 auto 1rem auto; color: #FAFAFA;">
@@ -171,11 +195,13 @@ with gr.Blocks(title="AudioScribe") as interface:
         with gr.Column(scale=1):
             gr.Markdown("### 1. Parâmetros da Transcrição")
             with gr.Group():
+                # A classe 'model-dropdown' aplica os novos estilos CSS específicos para ele
                 modelo_dropdown = gr.Dropdown(
                     choices=obter_opcoes_modelos(), 
                     value="base", 
-                    label="Modelo de Inteligência Artificial",
-                    info="Selecione o motor. Modelos mais pesados são mais precisos."
+                    label="Inteligência Artificial Base",
+                    info="⚡ Baixados / ☁️ Requer Download na primeira vez.",
+                    elem_classes=["model-dropdown"]
                 )
                 
                 contexto_input = gr.Textbox(
@@ -191,7 +217,6 @@ with gr.Blocks(title="AudioScribe") as interface:
                 audio_input = gr.Audio(type="filepath", label="Upload de Arquivo (Ou Grave Agora)", interactive=True)
                 
     with gr.Row():
-        # Botão centralizado de grande destaque
         transcrever_btn = gr.Button("Iniciar Transcrição", variant="primary", size="lg")
         
     gr.Markdown("---")
@@ -202,15 +227,13 @@ with gr.Blocks(title="AudioScribe") as interface:
             texto_output = gr.Textbox(
                 label="Texto Transcrito (Editável)", 
                 lines=10, 
-                interactive=True,
+                interactive=True
             )
             
             with gr.Row():
                 atualizar_btn = gr.Button("Confirmar Edições (Salvar)", variant="secondary")
-                # Substituí o arquivo grande por um botão de download elegante
                 download_btn = gr.DownloadButton("Exportar Arquivo .txt", variant="secondary", interactive=True)
 
-    # Conexões de Eventos
     transcrever_btn.click(
         fn=transcrever,
         inputs=[audio_input, contexto_input, modelo_dropdown],
@@ -224,5 +247,4 @@ with gr.Blocks(title="AudioScribe") as interface:
     )
 
 if __name__ == "__main__":
-    # Injetar dependências visuais na função launch (Gradio 6 compatibilidade)
     interface.launch(server_name="0.0.0.0", server_port=7860, theme=tema_moderno, css=css_moderno, favicon_path="favicon.svg")
