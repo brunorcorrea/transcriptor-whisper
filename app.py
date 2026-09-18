@@ -225,4 +225,4 @@ with gr.Blocks(title="AudioScribe") as interface:
 
 if __name__ == "__main__":
     # Injetar dependências visuais na função launch (Gradio 6 compatibilidade)
-    interface.launch(server_name="0.0.0.0", server_port=7860, theme=tema_moderno, css=css_moderno)
+    interface.launch(server_name="0.0.0.0", server_port=7860, theme=tema_moderno, css=css_moderno, favicon_path="favicon.svg")
