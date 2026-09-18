@@ -35,9 +35,12 @@ def obter_modelo(tamanho):
 
 obter_modelo("base")
 
-def transcrever(audio_path, contexto, tamanho_modelo):
+def transcrever(audio_upload, audio_mic, contexto, tamanho_modelo):
+    # Pega o áudio que estiver preenchido (ou upload ou gravação)
+    audio_path = audio_upload if audio_upload else audio_mic
+    
     if not audio_path:
-        return "Nenhum áudio fornecido.", None
+        return "Nenhum áudio fornecido. Por favor, faça o upload ou grave um áudio.", None
     try:
         modelo = obter_modelo(tamanho_modelo)
         opcoes = {"language": "pt"}
@@ -115,10 +118,16 @@ css_moderno = """
 .gradio-container button.secondary { border-radius: 9999px !important; font-weight: 500 !important; border: 1px solid #3F3F46 !important; }
 .gradio-container button.secondary:hover { background: #3F3F46 !important; }
 
+/* Customização das Abas (Tabs) para Upload e Gravação */
+.tabs { background: #09090B !important; border-radius: 16px !important; overflow: hidden !important; border: 1px solid #27272A !important;}
+.tab-nav { border-bottom: 1px solid #27272A !important; }
+.tab-nav button { color: #A1A1AA !important; font-weight: 500 !important; padding: 12px !important;}
+.tab-nav button.selected { color: #FAFAFA !important; border-bottom: 2px solid #FAFAFA !important; }
+
 /* Midia de Entrada - Melhoria do Outline */
 .gr-audio { 
     border: 2px dashed #3F3F46 !important; 
-    border-radius: 16px !important; 
+    border-radius: 12px !important; 
     overflow: hidden !important; 
     background: #09090B !important; 
     transition: all 0.3s ease !important; 
@@ -176,13 +185,21 @@ with gr.Blocks(title="AudioScribe") as interface:
                 contexto_input = gr.Textbox(
                     label="Dicionário de Contexto (Opcional)", 
                     placeholder="Ex: fairness, machine learning, trade-off", 
-                    lines=2, 
+                    lines=1, 
                     info="Forneça termos técnicos presentes no áudio."
                 )
                 
             gr.Markdown("### 2. Mídia de Entrada")
-            with gr.Group():
-                audio_input = gr.Audio(type="filepath", label="Upload / Gravação", interactive=True)
+            
+            # Divide as opções em abas para economizar o clique extra no botão de microfone
+            with gr.Tabs():
+                with gr.TabItem("Upload de Arquivo"):
+                    # Aba dedicada apenas para upload (sem o botão de microfone)
+                    audio_upload = gr.Audio(sources=["upload"], type="filepath", label="Arraste e solte o arquivo aqui")
+                
+                with gr.TabItem("Gravação por Voz"):
+                    # Aba dedicada apenas ao microfone (O botão RECORD já vai aparecer direto)
+                    audio_mic = gr.Audio(sources=["microphone"], type="filepath", label="Clique no botão abaixo para gravar")
                 
             transcrever_btn = gr.Button("Iniciar Transcrição", variant="primary", size="lg")
             
@@ -200,9 +217,10 @@ with gr.Blocks(title="AudioScribe") as interface:
                     atualizar_btn = gr.Button("Confirmar Edições (Salvar)", variant="secondary")
                     download_btn = gr.DownloadButton("Exportar Arquivo .txt", variant="secondary", interactive=True)
 
+    # Note que agora enviamos os DOIS inputs de áudio para a função
     transcrever_btn.click(
         fn=transcrever,
-        inputs=[audio_input, contexto_input, modelo_dropdown],
+        inputs=[audio_upload, audio_mic, contexto_input, modelo_dropdown],
         outputs=[texto_output, download_btn]
     )
     
