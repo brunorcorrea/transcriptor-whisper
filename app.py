@@ -2,14 +2,39 @@ import gradio as gr
 import whisper
 import warnings
 import tempfile
+import os
 
 warnings.filterwarnings("ignore", message="FP16 is not supported on CPU; using FP32 instead")
 
 modelos_carregados = {}
 
+# Informações sobre os modelos
+INFO_MODELOS = {
+    "tiny": {"peso": "~75MB", "classificacao": "Muito Leve"},
+    "base": {"peso": "~140MB", "classificacao": "Leve"},
+    "small": {"peso": "~460MB", "classificacao": "Mediano"},
+    "medium": {"peso": "~1.5GB", "classificacao": "Pesado"},
+    "turbo": {"peso": "~1.6GB", "classificacao": "Pesado (Rápido)"},
+    "large": {"peso": "~2.9GB", "classificacao": "Muito Pesado"}
+}
+
+def obter_opcoes_modelos():
+    cache_dir = os.path.expanduser("~/.cache/whisper")
+    opcoes = []
+    
+    for modelo, info in INFO_MODELOS.items():
+        # Whisper salva os modelos como .pt no cache
+        caminho_arquivo = os.path.join(cache_dir, f"{modelo}.pt")
+        status = "✅ BAIXADO" if os.path.exists(caminho_arquivo) else "⬇️ Baixar na hora"
+        
+        texto_exibicao = f"{modelo.upper()} | {info['classificacao']} | {info['peso']} | {status}"
+        opcoes.append((texto_exibicao, modelo))
+        
+    return opcoes
+
 def obter_modelo(tamanho):
     if tamanho not in modelos_carregados:
-        print(f"Carregando o modelo Whisper ({tamanho})...")
+        print(f"Carregando o modelo Whisper ({tamanho})... Pode demorar um pouco se não estiver baixado.")
         modelos_carregados[tamanho] = whisper.load_model(tamanho)
     return modelos_carregados[tamanho]
 
@@ -44,103 +69,116 @@ def preparar_download(texto_editado):
     temp_file.close()
     return temp_file.name
 
-# ---------------- Tema Futurista (Liquid Glass / Cyberpunk) ----------------
-tema_cyberglass = gr.themes.Base(
-    primary_hue="cyan",
-    secondary_hue="blue",
-    neutral_hue="slate",
+# ---------------- Tema Minimalista (Estilo PERSUA / Clean Dark Mode) ----------------
+tema_persua = gr.themes.Base(
+    primary_hue="zinc",
+    secondary_hue="zinc",
+    neutral_hue="zinc",
     font=[gr.themes.GoogleFont("Inter"), "ui-sans-serif", "system-ui", "sans-serif"],
 ).set(
-    body_background_fill="linear-gradient(135deg, #0f172a 0%, #020617 100%)",
-    body_text_color="#e2e8f0",
-    block_background_fill="rgba(30, 41, 59, 0.4)",
+    body_background_fill="#0E0E10",
+    body_text_color="#EDEDED",
+    block_background_fill="#18181B",
     block_border_width="1px",
-    block_border_color="rgba(255, 255, 255, 0.1)",
-    block_radius="16px",
-    block_shadow="0 4px 30px rgba(0, 0, 0, 0.5)",
-    button_primary_background_fill="linear-gradient(90deg, #06b6d4 0%, #3b82f6 100%)",
-    button_primary_text_color="white",
-    slider_color="#06b6d4",
+    block_border_color="#27272A",
+    block_radius="8px",
+    block_shadow="none",
+    button_primary_background_fill="#EDEDED",
+    button_primary_text_color="#09090B",
+    button_secondary_background_fill="#27272A",
+    button_secondary_text_color="#EDEDED",
+    input_background_fill="#09090B",
+    input_border_color="#27272A",
+    slider_color="#EDEDED",
 )
 
-css_personalizado = """
-/* Glassmorphism e desfoque para os painéis */
+css_minimalista = """
+/* Remove efeitos e ajusta bordas para um visual mais clean */
 .gradio-container .gr-block {
-    backdrop-filter: blur(16px) !important;
-    -webkit-backdrop-filter: blur(16px) !important;
+    backdrop-filter: none !important;
 }
 
-/* Efeito de neon pulsante nos botões principais */
+/* Botões primários com estilo sólido e contraste alto */
 .gradio-container button.primary {
-    box-shadow: 0 0 15px rgba(6, 182, 212, 0.4) !important;
-    transition: all 0.3s ease !important;
-    border: none !important;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    font-weight: 700;
+    border-radius: 6px !important;
+    font-weight: 600 !important;
+    border: 1px solid #EDEDED !important;
+    box-shadow: none !important;
+    transition: background 0.15s ease !important;
 }
 .gradio-container button.primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 0 25px rgba(6, 182, 212, 0.8) !important;
+    background: #D4D4D8 !important;
+    transform: none !important;
+    box-shadow: none !important;
 }
 
-/* Inputs focados com brilho cyber */
-.gradio-container textarea:focus, .gradio-container input:focus {
-    box-shadow: 0 0 12px rgba(56, 189, 248, 0.4) !important;
-    border-color: #06b6d4 !important;
+/* Botões secundários */
+.gradio-container button.secondary {
+    border-radius: 6px !important;
+    border: 1px solid #3F3F46 !important;
+}
+.gradio-container button.secondary:hover {
+    background: #3F3F46 !important;
 }
 
-
-/* Cores dos inputs */
+/* Inputs discretos */
 .gradio-container textarea, .gradio-container input {
-    background: rgba(0, 0, 0, 0.3) !important;
-    border: 1px solid rgba(6, 182, 212, 0.3) !important;
-    color: #38bdf8 !important;
+    border-radius: 6px !important;
+    color: #EDEDED !important;
+    box-shadow: none !important;
 }
-/* Tipografia de destaque para títulos */
-.gradio-container h1, .gradio-container h2 {
-    text-shadow: 0 0 10px rgba(56, 189, 248, 0.6) !important;
-    color: #e0f2fe !important;
-    font-family: 'Courier New', Courier, monospace;
+.gradio-container textarea:focus, .gradio-container input:focus {
+    border-color: #52525B !important;
+    box-shadow: none !important;
 }
 
-/* Caixas de texto monospaced para a transcrição parecer código/terminal */
-.gradio-container textarea {
-    font-family: 'Consolas', 'Courier New', monospace !important;
+/* Tipografia limpa */
+.gradio-container h1, .gradio-container h2 {
+    color: #FAFAFA !important;
+    font-weight: 700 !important;
+    text-shadow: none !important;
+    font-family: 'Inter', sans-serif !important;
+    letter-spacing: -0.02em;
+}
+
+/* Remove a borda azul padrão do Gradio nos áudios focados */
+.gr-audio {
+    border: 1px solid #27272A !important;
 }
 """
 # ---------------------------------------------------------------------------
 
-with gr.Blocks(title="Transcritor Inteligente") as interface:
-    gr.Markdown("# 🎙️ SYS.TRANSCRIBE // WHISPER_AI")
-    gr.Markdown("""
-    **[ STATUS: ONLINE ]**  
-    Interface neural de processamento de áudio ativada. Envie dados sonoros para extração de texto estruturado.
-    
-    *Dicas de calibração:* Insira parâmetros de **Contexto** para orientar a rede neural sobre jargões técnicos. Faça o upgrade de nó para o modelo **'small'** se desejar precisão máxima (download de 240MB no primeiro boot).
-    """)
+with gr.Blocks(title="Persua-like Transcritor") as interface:
+    gr.Markdown("# Transcritor de Áudio")
+    gr.Markdown("Adicione um arquivo de áudio abaixo para gerar a transcrição automática utilizando Whisper.")
     
     with gr.Row():
         with gr.Column():
-            audio_input = gr.Audio(type="filepath", label="Input de Áudio (Drag & Drop | Rec)", interactive=True)
+            audio_input = gr.Audio(type="filepath", label="Upload de Áudio", interactive=True)
             
             with gr.Row():
-                modelo_dropdown = gr.Dropdown(choices=["base", "small"], value="base", label="Tamanho da Rede Neural")
+                # O Dropdown carrega as opções dinamicamente usando a função
+                modelo_dropdown = gr.Dropdown(
+                    choices=obter_opcoes_modelos(), 
+                    value="base", 
+                    label="Modelo de Transcrição",
+                    info="Modelos pesados requerem download."
+                )
             
             contexto_input = gr.Textbox(
-                label="Parâmetros de Contexto / Jargões", 
-                placeholder="Ex: fairness, dataset, machine learning, trade-off", 
+                label="Contexto ou Palavras-chave (Opcional)", 
+                placeholder="Ex: fairness, machine learning, viés algorítmico", 
                 lines=2
             )
             
-            transcrever_btn = gr.Button("INICIAR EXTRAÇÃO", variant="primary")
+            transcrever_btn = gr.Button("Transcrever Áudio", variant="primary")
             
         with gr.Column():
-            texto_output = gr.Textbox(label="Saída de Dados (Console de Edição)", lines=12, interactive=True)
+            texto_output = gr.Textbox(label="Texto Transcrito", lines=12, interactive=True)
             
             with gr.Row():
-                atualizar_btn = gr.Button("💾 COMPILAR ALTERAÇÕES", variant="secondary")
-                arquivo_output = gr.File(label="Arquivo de Exportação (.txt)", interactive=False)
+                atualizar_btn = gr.Button("Salvar Edições", variant="secondary")
+                arquivo_output = gr.File(label="Baixar Arquivo", interactive=False)
 
     transcrever_btn.click(
         fn=transcrever,
@@ -155,4 +193,4 @@ with gr.Blocks(title="Transcritor Inteligente") as interface:
     )
 
 if __name__ == "__main__":
-    interface.launch(server_name="0.0.0.0", server_port=7860, theme=tema_cyberglass, css=css_personalizado)
+    interface.launch(server_name="0.0.0.0", server_port=7860, theme=tema_persua, css=css_minimalista)
