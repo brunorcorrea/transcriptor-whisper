@@ -20,13 +20,11 @@ INFO_MODELOS = {
 def obter_opcoes_modelos():
     cache_dir = os.path.expanduser("~/.cache/whisper")
     opcoes = []
-    
     for modelo, info in INFO_MODELOS.items():
         caminho_arquivo = os.path.join(cache_dir, f"{modelo}.pt")
         icone = "⚡" if os.path.exists(caminho_arquivo) else "☁️"
         texto_exibicao = f"{icone} {modelo.upper()}  —  {info['desc']}  ({info['peso']})"
         opcoes.append((texto_exibicao, modelo))
-        
     return opcoes
 
 def obter_modelo(tamanho):
@@ -53,7 +51,6 @@ def transcrever(audio_path, contexto, tamanho_modelo):
         temp_file = tempfile.NamedTemporaryFile(delete=False, mode="w", suffix=".txt", encoding="utf-8")
         temp_file.write(texto)
         temp_file.close()
-        
         return texto, temp_file.name
     except Exception as e:
         return f"Erro ao processar áudio: {str(e)}", None
@@ -118,23 +115,40 @@ css_moderno = """
 .gradio-container button.secondary { border-radius: 9999px !important; font-weight: 500 !important; border: 1px solid #3F3F46 !important; }
 .gradio-container button.secondary:hover { background: #3F3F46 !important; }
 
-.gr-audio { border-radius: 16px !important; overflow: hidden !important; }
+/* Midia de Entrada - Melhoria do Outline */
+.gr-audio { 
+    border: 2px dashed #3F3F46 !important; 
+    border-radius: 16px !important; 
+    overflow: hidden !important; 
+    background: #09090B !important; 
+    transition: all 0.3s ease !important; 
+}
+.gr-audio:hover { 
+    border-color: #71717A !important; 
+    background: rgba(255,255,255,0.02) !important; 
+}
 
 /* Força a caixa de texto do lado direito a preencher o espaço e ficar mais alta nativamente */
-.caixa-resultado textarea {
-    height: 440px !important;
-    resize: none !important;
+.caixa-resultado textarea { height: 440px !important; resize: none !important; }
+
+/* Estilo moderno para as barras de rolagem (Scrollbars) das áreas de texto e contexto */
+.gradio-container textarea::-webkit-scrollbar {
+    width: 8px; height: 8px;
+}
+.gradio-container textarea::-webkit-scrollbar-track {
+    background: #09090B; border-radius: 8px;
+}
+.gradio-container textarea::-webkit-scrollbar-thumb {
+    background: #3F3F46; border-radius: 8px;
+}
+.gradio-container textarea::-webkit-scrollbar-thumb:hover {
+    background: #71717A;
 }
 """
 
 with gr.Blocks(title="AudioScribe") as interface:
-    
-    # Layout Master: 2 Colunas (Esquerda para config, Direita para Resultados) para evitar Scroll
     with gr.Row():
-        
-        # --- COLUNA ESQUERDA (CONFIGURAÇÕES E INPUT) ---
         with gr.Column(scale=4):
-            # Cabeçalho compactado para não empurrar os elementos para baixo
             gr.HTML("""
             <div style="display: flex; align-items: center; margin-bottom: 1.5rem;">
                 <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color: #FAFAFA; margin-right: 12px;">
@@ -162,7 +176,7 @@ with gr.Blocks(title="AudioScribe") as interface:
                 contexto_input = gr.Textbox(
                     label="Dicionário de Contexto (Opcional)", 
                     placeholder="Ex: fairness, machine learning, trade-off", 
-                    lines=1, # Reduzido para economizar espaço vertical
+                    lines=2, 
                     info="Forneça termos técnicos presentes no áudio."
                 )
                 
@@ -172,14 +186,12 @@ with gr.Blocks(title="AudioScribe") as interface:
                 
             transcrever_btn = gr.Button("Iniciar Transcrição", variant="primary", size="lg")
             
-        # --- COLUNA DIREITA (SAÍDA E EXPORTAÇÃO) ---
         with gr.Column(scale=6):
             gr.Markdown("### 3. Resultado e Edição")
             with gr.Group():
-                # Caixa de texto ocupará grande parte da tela do lado direito
                 texto_output = gr.Textbox(
                     label="Texto Transcrito (Editável)", 
-                    lines=20, # Aumentado significativamente
+                    lines=20,
                     interactive=True,
                     elem_classes=["caixa-resultado"]
                 )
@@ -188,7 +200,6 @@ with gr.Blocks(title="AudioScribe") as interface:
                     atualizar_btn = gr.Button("Confirmar Edições (Salvar)", variant="secondary")
                     download_btn = gr.DownloadButton("Exportar Arquivo .txt", variant="secondary", interactive=True)
 
-    # Conexões de Eventos
     transcrever_btn.click(
         fn=transcrever,
         inputs=[audio_input, contexto_input, modelo_dropdown],
