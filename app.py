@@ -203,7 +203,6 @@ with gr.Blocks(title="AudioScribe") as interface:
                 label="Texto Transcrito (Editável)", 
                 lines=10, 
                 interactive=True,
-                show_copy_button=True
             )
             
             with gr.Row():
